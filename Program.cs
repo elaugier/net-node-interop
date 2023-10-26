@@ -1,49 +1,63 @@
 ﻿using System.Text;
 using Jering.Javascript.NodeJS;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 var services = new ServiceCollection();
 services.AddNodeJS();
+services.AddLogging((ILoggingBuilder loggingBuilder) =>
+{
+  loggingBuilder.AddConsole();
+});
 ServiceProvider serviceProvider = services.BuildServiceProvider();
 INodeJSService nodeJSService = serviceProvider.GetRequiredService<INodeJSService>();
 
 var rules = @"[{
-  conditions: {
-    any: [{
-      all: [{
-        fact: 'gameDuration',
-        operator: 'equal',
-        value: 40
-      }, {
-        fact: 'personalFoulCount',
-        operator: 'greaterThanInclusive',
-        value: 5
-      }]
-    }, {
-      all: [{
-        fact: 'gameDuration',
-        operator: 'equal',
-        value: 48
-      }, {
-        fact: 'personalFoulCount',
-        operator: 'greaterThanInclusive',
-        value: 6
-      }]
-    }]
+  ""conditions"": {
+    ""any"": [
+      {
+        ""all"": [
+          {
+            ""fact"": ""gameDuration"",
+            ""operator"": ""equal"",
+            ""value"": 40
+          },
+          {
+            ""fact"": ""personalFoulCount"",
+            ""operator"": ""greaterThanInclusive"",
+            ""value"": 5
+          }
+        ]
+      },
+      {
+        ""all"": [
+          {
+            ""fact"": ""gameDuration"",
+            ""operator"": ""equal"",
+            ""value"": 48
+          },
+          {
+            ""fact"": ""personalFoulCount"",
+            ""operator"": ""greaterThanInclusive"",
+            ""value"": 6
+          }
+        ]
+      }
+    ]
   },
-  event: {  // define the event to fire when the conditions evaluate truthy
-    type: 'fouledOut',
-    params: {
-      message: 'Player has fouled out!'
+  ""event"": {
+    ""type"": ""fouledOut"",
+    ""params"": {
+      ""message"": ""Player has fouled out!""
     }
   }
 }]";
 
 var facts = @"{
-  personalFoulCount: 6,
-  gameDuration: 40
+  ""personalFoulCount"": 6,
+  ""gameDuration"": 40
 }";
-
+Console.WriteLine($"rules = {rules}");
 
 EngineResult? result = await nodeJSService.InvokeFromFileAsync<EngineResult>("engine.js", "getEngineResult", args: new[] { Utf16ToUtf8(rules), Utf16ToUtf8(facts) });
 Console.WriteLine(result?.Result);
